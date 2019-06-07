@@ -3,9 +3,6 @@ package com.tommy.authentication.controller;
 
 import com.tommy.authentication.model.AuthenticationParticipant;
 import com.tommy.authentication.model.RegisterParticipant;
-import com.tommy.authentication.model.Role;
-import com.tommy.authentication.model.RoleType;
-import com.tommy.authentication.repository.RoleRepository;
 import com.tommy.authentication.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,14 +18,8 @@ public class AuthenticationController {
     private AuthenticationService service;
 
     @Autowired
-    public AuthenticationController(AuthenticationService service, RoleRepository repository) {
+    public AuthenticationController(AuthenticationService service) {
         this.service = service;
-
-        Role user = new Role(RoleType.ROLE_USER);
-        Role admin = new Role(RoleType.ROLE_ADMIN);
-
-        repository.save(user);
-        repository.save(admin);
     }
 
 
