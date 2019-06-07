@@ -52,11 +52,23 @@ public class AuthenticationService {
 
 
         User registerUser = new User(participant.getEmail(), participant.getPassword(),participant.getFirstname(),participant.getLastname(),generateDefaultRoleSet());
-        HttpEntity<User> request = new HttpEntity<>(registerUser);
 
         AuthRepo.save(registerUser);
-        restTemplate.postForEntity("http://user-service/profile", request, Void.class);
+        registerUserInMicroservices(registerUser);
+
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("[User is registered] : " + participant.getEmail());
+    }
+
+    private void registerUserInMicroservices(User registerUser) {
+        MicroserviceRegisterParticipant msRegisterParticipant = new MicroserviceRegisterParticipant();
+        msRegisterParticipant = msRegisterParticipant.userToMSRegisterParticipant(registerUser);
+
+
+        HttpEntity<MicroserviceRegisterParticipant> serviceRegisterRequest = new HttpEntity<>(msRegisterParticipant);
+
+
+        restTemplate.postForEntity("http://lobby-service/register", serviceRegisterRequest, Void.class);
+        restTemplate.postForEntity("http://user-service/profile/register", serviceRegisterRequest, Void.class);
     }
 
 
