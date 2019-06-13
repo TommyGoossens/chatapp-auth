@@ -1,4 +1,4 @@
-package com.tommy.authentication.security;
+package com.tommy.authentication.config.security;
 
 import com.tommy.authentication.model.User;
 import lombok.AllArgsConstructor;

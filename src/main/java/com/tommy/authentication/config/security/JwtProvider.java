@@ -1,4 +1,4 @@
-package com.tommy.authentication.security;
+package com.tommy.authentication.config.security;
 
 import com.tommy.authentication.model.User;
 import com.tommy.authentication.service.AuthenticationService;
@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 
-import static com.tommy.authentication.security.SecurityConstants.EXPIRATION_TIME;
-import static com.tommy.authentication.security.SecurityConstants.SECRET_KEY;
+import static com.tommy.authentication.config.security.SecurityConstants.EXPIRATION_TIME;
+import static com.tommy.authentication.config.security.SecurityConstants.SECRET_KEY;
 
 @Component
 public class JwtProvider {

@@ -1,4 +1,4 @@
-package com.tommy.authentication.security;
+package com.tommy.authentication.config.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -7,9 +7,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import static com.tommy.authentication.security.SecurityConstants.SIGN_IN_URL;
-import static com.tommy.authentication.security.SecurityConstants.SIGN_UP_URL;
 
 @Configuration
 @EnableWebSecurity
@@ -23,16 +20,28 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        // Allow CORS and disable csrf
         http
-                .cors().and().csrf().disable();
+                .cors()
+                .and()
+                .csrf()
+                .disable();
+        http
+                .headers()
+                .contentSecurityPolicy("script-src 'self' https://trustedscripts.example.com; object-src https://trustedplugins.example.com; report-uri /csp-report-endpoint/");
 
+        // Make sure spring security doesn't create any session as it's not needed
         http
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll()
-                .antMatchers(HttpMethod.POST, SIGN_IN_URL).permitAll()
+                .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL).permitAll()
+                .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_IN_URL).permitAll()
+                .antMatchers("/swagger-ui.html").permitAll()
+                .antMatchers("/api").permitAll()
+                .antMatchers("/v2/api-docs").permitAll()
                 .and()
                 .authorizeRequests()
                 .anyRequest()

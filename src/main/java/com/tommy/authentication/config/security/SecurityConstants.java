@@ -1,4 +1,4 @@
-package com.tommy.authentication.security;
+package com.tommy.authentication.config.security;
 
 
 public class SecurityConstants {

@@ -6,8 +6,8 @@ import com.tommy.authentication.exception.PasswordIncorrectException;
 import com.tommy.authentication.model.*;
 import com.tommy.authentication.repository.AuthenticationRepository;
 import com.tommy.authentication.repository.RoleRepository;
-import com.tommy.authentication.security.JwtProvider;
-import com.tommy.authentication.security.UserDetailImpl;
+import com.tommy.authentication.config.security.JwtProvider;
+import com.tommy.authentication.config.security.UserDetailImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -40,12 +40,31 @@ public class AuthenticationService {
     }
 
     /**
+     * Method to authenticate the user, if the provided credentials are correct.
+     * Might throw a NotExistingEntity exception when the email is not to be found, or a PasswordIncorrectException when the credentials don't match
+     * @param participant object containing a email and password provided by the user to authenticate
+     * @return jwt token containing all relevant information when the user details are correct
+     */
+    public ResponseEntity<JwtResponse> signIn(AuthenticationParticipant participant) {
+        User user = AuthRepo.findUserByEmail(participant.getEmail()).orElseThrow(() -> new NotExistingEntity(participant.getEmail()));
+
+        List<String> roles = new ArrayList<>();
+        for (Role role : user.getRoles())
+            roles.add(role.getRoleType().name());
+
+        if (comparePasswords(participant.getPassword(), user.getPassword())) {
+            return ResponseEntity.ok().body(new JwtResponse(jwtProvider.createToken(user,roles)));
+        }
+        throw new PasswordIncorrectException();
+    }
+
+    /**
      * Registers a new user in the database.
      *
      * @param participant containing a password and a email
-     * @return 200: if email already exitst, accepted when the user is registered and a badrequest whenever the data is not correct formatted
+     * @return 200: if email already exists, accepted when the user is registered and a badrequest whenever the data is not correct formatted
      */
-    public ResponseEntity<?> register(RegisterParticipant participant) {
+    public ResponseEntity<?> signUp(RegisterParticipant participant) {
         AuthRepo.findUserByEmail(participant.getEmail()).ifPresent(u -> { throw new DuplicateEntity(participant.getEmail()); });
 
         participant.setPassword(hashPassword(participant.getPassword()));
@@ -59,6 +78,10 @@ public class AuthenticationService {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("[User is registered] : " + participant.getEmail());
     }
 
+    //=======================================
+    //            Micro service methods
+    //=======================================
+
     private void registerUserInMicroservices(User registerUser) {
         MicroserviceRegisterParticipant msRegisterParticipant = new MicroserviceRegisterParticipant();
         msRegisterParticipant = msRegisterParticipant.userToMSRegisterParticipant(registerUser);
@@ -71,25 +94,9 @@ public class AuthenticationService {
         restTemplate.postForEntity("http://user-service/profile/register", serviceRegisterRequest, Void.class);
     }
 
-
-    /**
-     * Method to authenticate the user, if the provided credentials are correct.
-     * Might throw a NotExistingEntity exception when the email is not to be found, or a PasswordIncorrectException when the credentials don't match
-     * @param participant object containing a email and password provided by the user to authenticate
-     * @return jwt token containing all relevant information when the user details are correct
-     */
-    public ResponseEntity<JwtResponse> login(AuthenticationParticipant participant) {
-        User user = AuthRepo.findUserByEmail(participant.getEmail()).orElseThrow(() -> new NotExistingEntity(participant.getEmail()));
-
-        List<String> roles = new ArrayList<>();
-        for (Role role : user.getRoles())
-            roles.add(role.getRoleType().name());
-
-        if (comparePasswords(participant.getPassword(), user.getPassword())) {
-            return ResponseEntity.ok().body(new JwtResponse(jwtProvider.createToken(user,roles)));
-        }
-        throw new PasswordIncorrectException();
-    }
+    //=======================================
+    //            Private methods
+    //=======================================
 
     /**
      * Hashes a password using BCrypts encoding algorithm
